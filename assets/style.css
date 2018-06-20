@@ -32,10 +32,11 @@ h1 {
 .card {
   padding: 10px;
   border: solid 1px;
-  background: #ff6;
+  background: #ffd;
   position: absolute;
   width: 256px;
   min-height: 64px;
+  box-shadow: -5px -5px 15px 0px rgba(0,0,0,.25);
 }
 .card p {
   margin: 0;

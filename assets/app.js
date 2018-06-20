@@ -16,12 +16,16 @@ var notesById = {};
 
 // scroll
 var currentPosition = [0,0];
-var cardTemplate = _.template('<div class="card" draggable="true" id="card-<%= id %>" data-card-id="<%= id %>" style="left: <%= x %>px; top: <%= y %>px;"><p><%= text %></div>');
+var cardTemplate = _.template('<div class="card" draggable="true" id="card-<%= id %>" data-card-id="<%= id %>" style="left: <%= x %>px; top: <%= y %>px; z-index: <%= deriveZ(x, y) %>"><p><%= text %></div>');
 
 function closest(q, el) {
   if (el.matches(q)) return el;
   if (el.matches(':root')) return undefined;
   return closest(q, el.parentElement);
+}
+
+function deriveZ(x, y) {
+  return (y * 1000) + (x * 100);
 }
 
 function dragStartCard(e) {
@@ -50,12 +54,18 @@ function initDragScroll(el) {
   var positionShift = [0,0];
   var newPos = [0,0];
   var spaceEl = document.querySelector('.space');
+
+  // add physics, inertia effect
   
   el.addEventListener('mousedown', function (e) {
+    if (closest('.card', e.target)) {
+      e.stopPropagation();
+      return false;
+    }
     isGrabbed = true;
     positionShift = [0,0];
     holdPoint = [e.screenX, e.screenY];
-    currentPosition = [el.scrollLeft, el.scrollTop]
+    currentPosition = [el.scrollLeft, el.scrollTop];
   });
   el.addEventListener('mousemove', function (e) {
     if (isGrabbed) {
@@ -70,6 +80,7 @@ function initDragScroll(el) {
     isGrabbed = false;
     currentPosition = newPos.slice();
   });
+  // todo canvas extension when scrolling at boundary
 }
 
 function init () {
@@ -85,21 +96,43 @@ function init () {
     notesById[i] = c;
   });
   document.querySelector('.space').innerHTML = b;
-  
-  Array.prototype.forEach.call(document.querySelectorAll('.card'), (c) => {
-    var id = c.getAttribute('data-card-id');
-    c.addEventListener('mousedown', e => {
+
+  document.addEventListener('mousedown', function (e) {
+    var card;
+    if (e.target) card = closest('.card', e.target);
+    if (card) {
       e.stopPropagation();
-    });
-    c.addEventListener('dragstart', e => {
-      dragged = e.target;
+    }
+  });
+
+  document.addEventListener('dragstart', function (e) {
+    var card;
+    if (e.target) card = closest('.card', e.target);
+    if (card) {
+      dragged = card;
       e.dataTransfer.setData('text/plain',null);
       position = [e.screenX, e.screenY];
-    }, false);
-    
+    }
+  }, false);
+
+  document.addEventListener('dragend', function (e) {
+    if (e.target.className === 'card') {
+      
+      var positionDiff = [e.screenX - position[0], e.screenY - position[1]];
+      var left = parseInt(e.target.style.left.split('px')[0]);
+      var top = parseInt(e.target.style.top.split('px')[0]);
+
+      var x = left + positionDiff[0];
+      var y = top  + positionDiff[1];
+      
+      e.target.style.left = x + 'px';
+      e.target.style.top  = y + 'px';
+      e.target.style.zIndex = deriveZ(x, y);
+      
+      // save
+    }
   });
-  
-  
+
   document.addEventListener('dblclick', function (e) {
     var card;
     if (e.target) {
@@ -112,23 +145,6 @@ function init () {
         notesById[id].text = p;
         card.children[0].textContent = p;
       }
-    }
-  });
-  
-  document.addEventListener('dragend', function (e) {
-    if (e.target.className === 'card') {
-      
-      var positionDiff = [e.screenX - position[0], e.screenY - position[1]];
-      var left = parseInt(e.target.style.left.split('px')[0]);
-      var top = parseInt(e.target.style.top.split('px')[0]);
-      
-      e.target.style.left = left + positionDiff[0] + 'px';
-      e.target.style.top  = top  + positionDiff[1] + 'px';
-      
-      
-      // z index to top
-      
-      // save
     }
   });
   

@@ -1,0 +1,51 @@
+html {
+  font: 14px/1.4 sans-serif;
+  min-width: 200vw;
+  min-height: 200vh;
+}
+
+body {
+  margin: 0;
+}
+
+.app-header {
+  color: #fff;
+  width: calc(100% - 160px);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 0.5rem;
+  user-select: none;
+  position: fixed;
+  z-index: 100;
+  border-bottom-right-radius: 1rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.card {
+  padding: 10px;
+  border: solid 1px;
+  background: #ff6;
+  position: absolute;
+  width: 256px;
+  min-height: 64px;
+}
+.card p {
+  margin: 0;
+}
+
+html {
+  background: linear-gradient(to right, #9EF, #9EF 1px, transparent 1px, transparent), linear-gradient(to bottom, #9EF, #9EF 1px, transparent 1px, transparent);
+  background-size: 32px 32px;
+  height: 100vh;
+}
+
+.space {
+  position: relative;
+}
+
+.view {
+  
+}

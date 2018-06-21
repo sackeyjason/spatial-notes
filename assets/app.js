@@ -55,6 +55,20 @@ function initDragScroll(el) {
   var newPos = [0,0];
   var spaceEl = document.querySelector('.space');
 
+  var setHashCoords = _.debounce(function () {
+    var h = '#' + el.scrollLeft + ',' + el.scrollTop;
+    // account for additional negative space after extension is implemented
+    
+    console.log(h);
+    if(history.pushState) {
+      history.pushState(null, null, h);
+    }
+    else {
+        location.hash = h;
+    }
+  }, 200);
+  console.log('100')
+
   // add physics, inertia effect
   
   el.addEventListener('mousedown', function (e) {
@@ -80,6 +94,8 @@ function initDragScroll(el) {
     isGrabbed = false;
     currentPosition = newPos.slice();
   });
+  window.addEventListener('scroll', setHashCoords);
+  el.addEventListener('scroll', setHashCoords);
   // todo canvas extension when scrolling at boundary
 }
 

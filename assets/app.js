@@ -51,9 +51,7 @@ function makeCard() {
 function initDragScroll(el) {
   var isGrabbed = false;
   var holdPoint = [0,0];
-  var positionShift = [0,0];
   var newPos = [0,0];
-  var spaceEl = document.querySelector('.space');
 
   var setHashCoords = _.debounce(function () {
     var h = '#' + el.scrollLeft + ',' + el.scrollTop;
@@ -77,7 +75,6 @@ function initDragScroll(el) {
       return false;
     }
     isGrabbed = true;
-    positionShift = [0,0];
     holdPoint = [e.screenX, e.screenY];
     currentPosition = [el.scrollLeft, el.scrollTop];
   });
@@ -131,9 +128,9 @@ function init () {
     }
   }, false);
 
+
   document.addEventListener('dragend', function (e) {
     if (e.target.className === 'card') {
-      
       var positionDiff = [e.screenX - position[0], e.screenY - position[1]];
       var left = parseInt(e.target.style.left.split('px')[0]);
       var top = parseInt(e.target.style.top.split('px')[0]);
@@ -144,6 +141,9 @@ function init () {
       e.target.style.left = x + 'px';
       e.target.style.top  = y + 'px';
       e.target.style.zIndex = deriveZ(x, y);
+      e.target.style.transform = '';
+
+      dragged = null;
       
       // save
     }

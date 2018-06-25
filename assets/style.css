@@ -49,5 +49,7 @@ h1 {
 .card p {
   margin: 0;
 }
-
-
+.card textarea {
+  width: 100%;
+  resize: vertical;
+}

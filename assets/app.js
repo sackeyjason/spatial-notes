@@ -4,24 +4,30 @@ var notes = [
     x: 100,
     y: 50
   }, {
-    text: "World!<br><br>With the mouse, click and drag the background to pan the view.",
+    text: "World!\n\nWith the mouse, click and drag the background to pan the view.",
     x: 150,
     y: 100
   },
   {
-    text: "Drag cards to move them. Double-click them to edit the text. Press 'N' to made new cards (Bug warning! This essential feature is incomplete!)", x: 80, y: 230
+    text: "Drag cards to move them. Double-click them to edit the text. Press 'N' to made new cards.", x: 80, y: 230
   }
 ];
 var notesById = {};
 
 // scroll
 var currentPosition = [0,0];
-var cardTemplate = _.template('<div class="card" draggable="true" id="card-<%= id %>" data-card-id="<%= id %>" style="left: <%= x %>px; top: <%= y %>px; z-index: <%= deriveZ(x, y) %>"><p><%= text %></div>');
+var cardTemplate = _.template('<div class="card" draggable="true" id="card-<%= id %>" data-card-id="<%= id %>" style="left: <%= x %>px; top: <%= y %>px; z-index: <%= deriveZ(x, y) %>"><p><%= renderText(text) %></div>');
 
 function closest(q, el) {
+  if (!el.matches) return undefined;
   if (el.matches(q)) return el;
   if (el.matches(':root')) return undefined;
   return closest(q, el.parentElement);
+}
+
+function renderText(text) {
+  var output = text.replace(/\n/g, "<br />");
+  return output;
 }
 
 function deriveZ(x, y) {
@@ -65,7 +71,6 @@ function initDragScroll(el) {
         location.hash = h;
     }
   }, 200);
-  console.log('100')
 
   // add physics, inertia effect
   
@@ -92,7 +97,6 @@ function initDragScroll(el) {
     currentPosition = newPos.slice();
   });
   window.addEventListener('scroll', setHashCoords);
-  el.addEventListener('scroll', setHashCoords);
   // todo canvas extension when scrolling at boundary
 }
 
@@ -156,13 +160,26 @@ function init () {
     }
     if (card) {
       var id = card.getAttribute('data-card-id');
-      var p = window.prompt('Edit', notesById[id].text);
-      if (p || p === '') {
-        notesById[id].text = p;
-        card.children[0].textContent = p;
-      }
+      var oldText = notesById[id].text;
+      card.children[0].innerHTML = '<textarea rows="5">' + oldText + '</textarea>';
+      card.setAttribute('draggable', false);
+      card.children[0].children[0].focus();
     }
   });
+
+  document.addEventListener('blur', function (e) {
+    var card;
+    if (e.target) {
+      card = closest('.card', e.target);
+    }
+    if (card && e.target.matches('textarea')) {
+      var id = card.getAttribute('data-card-id');
+      var newText = e.target.value;
+      notesById[id].text = newText;
+      card.setAttribute('draggable', true);
+      card.children[0].innerHTML = renderText(newText);
+    }
+  }, true)
   
   // make new
   document.addEventListener('keydown', function(e) {

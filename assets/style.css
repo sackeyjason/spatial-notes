@@ -1,9 +1,13 @@
+*, *:before, *:after {
+  box-sizing: border-box;
+}
+
 html {
   font: 14px/1.4 sans-serif;
   height: 100vh;
   min-width: 200vw;
   min-height: 200vh;
-  background: linear-gradient(to right, #9EF, #9EF 1px, transparent 1px, transparent), linear-gradient(to bottom, #9EF, #9EF 1px, transparent 1px, transparent);
+  background: linear-gradient(to right, #ccc, #ccc 1px, transparent 1px, transparent), linear-gradient(to bottom, #ccc, #ccc 1px, transparent 1px, transparent);
   background-size: 32px 32px;
 }
 
@@ -18,7 +22,6 @@ body {
   user-select: none;
   position: fixed;
   z-index: 2;
-  border-bottom-right-radius: 1rem;
   background: rgba(255,255,255,.8);
   border-bottom: solid 1px;
   display: flex;
@@ -40,11 +43,12 @@ h1 {
 .card {
   padding: 10px;
   border: solid 1px;
-  background: #ffd;
+  background: #fff;
   position: absolute;
   width: 256px;
   min-height: 64px;
-  box-shadow: -5px -5px 10px -5px rgba(0,0,0,.5);
+  box-shadow: inset 1px 1px #666;
+  border-radius: 4px;
 }
 .card p {
   margin: 0;

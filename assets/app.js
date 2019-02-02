@@ -15,8 +15,10 @@ var notes = saved || [
     text: "World!\n\nWith the mouse, click and drag the background to pan the view.",
     x: 150,
     y: 100
-  }, {
-    text: "Drag cards to move them. Double-click them to edit the text. Press 'N' to made new cards (Bug warning! This essential feature is incomplete!)", x: 80, y: 230
+  },
+  {
+    text: "Drag cards to move them. Double-click them to edit the text. Press 'N' to made new cards.",
+    x: 80, y: 230
   }
 ];
 var notesById = {};
@@ -32,9 +34,15 @@ var cardTemplate = _.template('<div class="card" draggable="true" id="card-<%= i
 var textEditUiTemplate = _.template('<div><textarea><%= text %></textarea><br><span class="character-count"><%= text.length %></span></div>');
 
 function closest(q, el) {
+  if (!el.matches) return undefined;
   if (el.matches(q)) return el;
   if (el.matches(':root')) return undefined;
   return closest(q, el.parentElement);
+}
+
+function renderText(text) {
+  var output = text.replace(/\n/g, "<br />");
+  return output;
 }
 
 function deriveZ(x, y) {
@@ -66,10 +74,20 @@ function makeCard() {
 function initDragScroll(el) {
   var isGrabbed = false;
   var holdPoint = [0,0];
-  var positionShift = [0,0];
   var newPos = [0,0];
-  var spaceEl = document.querySelector('.space');
-  currentPosition = [el.scrollLeft, el.scrollTop];
+
+  var setHashCoords = _.debounce(function () {
+    var h = '#' + el.scrollLeft + ',' + el.scrollTop;
+    // account for additional negative space after extension is implemented
+    
+    console.log(h);
+    if(history.pushState) {
+      history.pushState(null, null, h);
+    }
+    else {
+        location.hash = h;
+    }
+  }, 200);
 
   // add physics, inertia effect
   
@@ -79,7 +97,6 @@ function initDragScroll(el) {
       return false;
     }
     isGrabbed = true;
-    positionShift = [0,0];
     holdPoint = [e.screenX, e.screenY];
     currentPosition = [el.scrollLeft, el.scrollTop];
   });
@@ -96,10 +113,7 @@ function initDragScroll(el) {
     isGrabbed = false;
     currentPosition = newPos.slice();
   });
-  window.addEventListener('scroll', function (e) {
-    // currentPosition = [el.scrollLeft, el.scrollTop];
-    // nope.
-  });
+  window.addEventListener('scroll', setHashCoords);
   // todo canvas extension when scrolling at boundary
 
 }
@@ -137,6 +151,7 @@ function init () {
     }
   }, false);
 
+
   document.addEventListener('dragend', function (e) {
     if (e.target.matches('.card')) {
       
@@ -150,6 +165,9 @@ function init () {
       e.target.style.left = x + 'px';
       e.target.style.top  = y + 'px';
       e.target.style.zIndex = deriveZ(x, y);
+      e.target.style.transform = '';
+
+      dragged = null;
       
       // save
       var note = _.findWhere(notes, {
@@ -168,14 +186,26 @@ function init () {
     }
     if (card) {
       var id = card.getAttribute('data-card-id');
-      //card.innerHTML = textEditUiTemplate(notesById[id]);
-      //var p = window.prompt('Edit', notesById[id].text);
-      // if (p || p === '') {
-      //   notesById[id].text = p;
-      //   card.children[0].textContent = p;
-      // }
+      var oldText = notesById[id].text;
+      card.children[0].innerHTML = '<textarea rows="5">' + oldText + '</textarea>';
+      card.setAttribute('draggable', false);
+      card.children[0].children[0].focus();
     }
   });
+
+  document.addEventListener('blur', function (e) {
+    var card;
+    if (e.target) {
+      card = closest('.card', e.target);
+    }
+    if (card && e.target.matches('textarea')) {
+      var id = card.getAttribute('data-card-id');
+      var newText = e.target.value;
+      notesById[id].text = newText;
+      card.setAttribute('draggable', true);
+      card.children[0].innerHTML = renderText(newText);
+    }
+  }, true)
   
   // make new
   document.addEventListener('keydown', function(e) {

@@ -1,22 +1,35 @@
-var notes = [
+var saved;
+try {
+  saved = JSON.parse(window.localStorage.notes);
+} catch(err) {
+  saved = '';
+}
+// saved = '';
+
+var notes = saved || [
   {
     text: "Hello",
     x: 100,
     y: 50
   }, {
-    text: "World!<br><br>With the mouse, click and drag the background to pan the view.",
+    text: "World!\n\nWith the mouse, click and drag the background to pan the view.",
     x: 150,
     y: 100
-  },
-  {
+  }, {
     text: "Drag cards to move them. Double-click them to edit the text. Press 'N' to made new cards (Bug warning! This essential feature is incomplete!)", x: 80, y: 230
   }
 ];
 var notesById = {};
 
+function save() {
+  window.localStorage.notes = JSON.stringify(notes);
+}
+
+save();
 // scroll
 var currentPosition = [0,0];
-var cardTemplate = _.template('<div class="card" draggable="true" id="card-<%= id %>" data-card-id="<%= id %>" style="left: <%= x %>px; top: <%= y %>px; z-index: <%= deriveZ(x, y) %>"><p><%= text %></div>');
+var cardTemplate = _.template('<div class="card" draggable="true" id="card-<%= id %>" data-card-id="<%= id %>" style="left: <%= x %>px; top: <%= y %>px; z-index: <%= deriveZ(x, y) %>"><p card=""><%= text %></p></div>');
+var textEditUiTemplate = _.template('<div><textarea><%= text %></textarea><br><span class="character-count"><%= text.length %></span></div>');
 
 function closest(q, el) {
   if (el.matches(q)) return el;
@@ -34,11 +47,12 @@ function dragStartCard(e) {
 
 function makeCard() {
   var newCard = document.createElement('div');
+  currentPosition = [document.querySelector('html').scrollLeft, document.querySelector('html').scrollTop];
   var newData = {
     text: '',
-    x: currentPosition[0] + 10,
-    y: currentPosition[1] + 50,
-    id: Math.random().toString().slice(2)
+    x: currentPosition[0] + 200,
+    y: currentPosition[1] + 100,
+    id: _.random(0, 9999)
   };
   
   newCard.innerHTML = cardTemplate(newData);
@@ -46,6 +60,7 @@ function makeCard() {
   notesById[newData.id] = newData;
   
   document.querySelector('.space').appendChild(newCard.children[0]);
+  save();
 }
 
 function initDragScroll(el) {
@@ -54,6 +69,7 @@ function initDragScroll(el) {
   var positionShift = [0,0];
   var newPos = [0,0];
   var spaceEl = document.querySelector('.space');
+  currentPosition = [el.scrollLeft, el.scrollTop];
 
   // add physics, inertia effect
   
@@ -80,7 +96,12 @@ function initDragScroll(el) {
     isGrabbed = false;
     currentPosition = newPos.slice();
   });
+  window.addEventListener('scroll', function (e) {
+    // currentPosition = [el.scrollLeft, el.scrollTop];
+    // nope.
+  });
   // todo canvas extension when scrolling at boundary
+
 }
 
 function init () {
@@ -91,9 +112,9 @@ function init () {
   // load
   
   notes.forEach(function(c, i) {
-    c.id = i;
+    c.id = c.id || i;
     b = b + cardTemplate(c);
-    notesById[i] = c;
+    notesById[c.id] = c;
   });
   document.querySelector('.space').innerHTML = b;
 
@@ -106,6 +127,7 @@ function init () {
   });
 
   document.addEventListener('dragstart', function (e) {
+    // replace. custom drag code.
     var card;
     if (e.target) card = closest('.card', e.target);
     if (card) {
@@ -116,7 +138,7 @@ function init () {
   }, false);
 
   document.addEventListener('dragend', function (e) {
-    if (e.target.className === 'card') {
+    if (e.target.matches('.card')) {
       
       var positionDiff = [e.screenX - position[0], e.screenY - position[1]];
       var left = parseInt(e.target.style.left.split('px')[0]);
@@ -130,6 +152,12 @@ function init () {
       e.target.style.zIndex = deriveZ(x, y);
       
       // save
+      var note = _.findWhere(notes, {
+        id: Number(e.target.id.slice(5))
+      });
+      note.x = x;
+      note.y = y;
+      window.localStorage.notes = JSON.stringify(notes);
     }
   });
 
@@ -140,11 +168,12 @@ function init () {
     }
     if (card) {
       var id = card.getAttribute('data-card-id');
-      var p = window.prompt('Edit', notesById[id].text);
-      if (p || p === '') {
-        notesById[id].text = p;
-        card.children[0].textContent = p;
-      }
+      //card.innerHTML = textEditUiTemplate(notesById[id]);
+      //var p = window.prompt('Edit', notesById[id].text);
+      // if (p || p === '') {
+      //   notesById[id].text = p;
+      //   card.children[0].textContent = p;
+      // }
     }
   });
   
@@ -155,11 +184,9 @@ function init () {
     }
   });
   
-  
   initDragScroll(document.querySelector(':root'));
   
-  // !! Accessibility: DOM order, horizontal/vertical ordering
-  
+  // !! Accessibility: DOM order, horizontal/vertical ordering. Requires consideration.
 }
 
 init();
